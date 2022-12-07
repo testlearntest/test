@@ -1,0 +1,369 @@
+ permissions
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+ <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+ <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+ <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+ <uses-permission android:name="android.permission.SEND_SMS" />
+
+
+//Sql
+public class DbHelper extends SQLiteOpenHelper {
+    private static final String DATABASE_NAME="studentDB.db";
+    public DbHelper(Context context) {
+        super(context, DATABASE_NAME, null, 1);
+    }
+    @Override
+    public void onCreate(SQLiteDatabase sqLiteDatabase) {
+        String create_table_query = "CREATE TABLE students(Name TEXT, Address TEXT, Phone TEXT PRIMARY KEY, Email TEXT)";
+        sqLiteDatabase.execSQL(create_table_query);
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS students");
+        onCreate(sqLiteDatabase);
+    }
+
+    Boolean insertStudent(String Name, String Address, String Phone, String Email){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("Name",Name);
+        values.put("Address",Address);
+        values.put("Phone",Phone);
+        values.put("Email",Email);
+        long i = db.insert("students",null, values);
+        if (i==-1){
+            return false;
+        }else{
+            return true;
+        }
+    }
+    
+    Boolean updateStudent(String Phone,String Name, String Address, String Email){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("Name",Name);
+        values.put("Address",Address);
+        values.put("Email",Email);
+        int i = db.update("students",values,"Phone=?",new String[]{Phone});
+        if(i>0){
+            return true;
+        }
+        return false;
+    }
+
+    ArrayList<ArrayList<String>> getAllStudents(){
+        ArrayList<ArrayList<String>> result = new ArrayList();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cur = db.rawQuery("SELECT * FROM students",null);
+        while(cur.moveToNext()){
+            ArrayList<String> data = new ArrayList();
+            data.add(cur.getString(0));
+            data.add(cur.getString(1));
+            data.add(cur.getString(2));
+            data.add(cur.getString(3));
+            result.add(data);
+//            for(ArrayList<String> d : result){
+//                for(String a: d){
+//                    System.out.println(a);
+//                }
+//            }
+        }
+        return result;
+    }
+
+    Boolean deleteStudent(String Name){
+        SQLiteDatabase db = this.getWritableDatabase();
+        int i = db.delete("students","Name=?",new String[]{Name});
+        if(i>0){
+            return true;
+        }
+        return false;
+    }
+}
+
+//gps
+    public void getl(View view) {
+        TextView lat = findViewById(R.id.lat);
+        TextView lon = findViewById(R.id.lon);
+        LocationManager logmg = (LocationManager) getSystemService(LOCATION_SERVICE);
+        LocationListener lis = new LocationListener() {
+            @Override
+            public void onLocationChanged(@NonNull Location location) {
+                System.out.println("aahhh");
+                lat.setText(location.getLatitude() + "");
+                lon.setText(location.getLongitude() + "");
+            }
+        };
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        logmg.requestLocationUpdates("gps", 5000, 0, lis);
+        }
+
+
+//sd card
+    public void write(View view) throws IOException {
+         TextView towrite = findViewById(R.id.write1);
+         String content = towrite.getText().toString();
+         File exfile = new File(getExternalFilesDir("FileDir"),"myFile.txt");
+         try {
+             FileOutputStream fos = new FileOutputStream(exfile);
+             fos.write(content.getBytes());
+         }catch (Exception e){}
+    }
+
+    public void read(View view){
+        TextView read1 = findViewById(R.id.read1);
+        File myExtFile = new File(getExternalFilesDir("FileDir"),"myFile.txt");
+        String contents = "";
+        try{
+           FileReader fr = new FileReader(myExtFile);
+            BufferedReader br = new BufferedReader(fr);
+            String line = br.readLine();
+            while(line!=null){
+                contents += line;
+                line = br.readLine();
+            }
+             read1.setText(contents);
+        }
+        catch (Exception e){}
+    }
+
+//sms
+ public void send(View view){
+          TextView mes = findViewById(R.id.message);
+          String message = mes.getText().toString();
+
+          ActivityCompat.requestPermissions(MainActivity.this,new String[]{Manifest.permission.SEND_SMS},1);
+        SmsManager sendmsg = SmsManager.getDefault();
+        sendmsg.sendTextMessage("555-123-4567",null,message,null,null);
+
+    }
+
+//shapes
+public class MyCanvas extends View {
+    Paint paint;
+    Rect rect;
+    public MyCanvas(Context context) {
+        super(context);
+         paint = new Paint();
+         rect = new Rect();
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        paint.setColor(Color.RED);
+        canvas.drawRect(5,5,canvas.getWidth()/2,canvas.getHeight()/2,paint);
+        paint.setColor(Color.BLUE);
+        canvas.drawCircle(canvas.getWidth()/2,canvas.getHeight()/2,100,paint);
+        canvas.drawLine(0,0,canvas.getWidth(),canvas.getHeight(),paint);
+    }
+}
+
+//animation
+public void rotate(View view){
+ImageView image = (ImageView)findViewById(R.id.imageView);
+Animation animation = AnimationUtils.loadAnimation(getApplicationContext(),R.anim.rotate);
+image.startAnimation(animation);
+}
+public void blink(View view){
+ImageView image = (ImageView)findViewById(R.id.imageView);
+Animation animation=AnimationUtils.loadAnimation(getApplicationContext(),R.anim.blink);
+image.startAnimation(animation);
+}
+
+(move.xml)
+<?xml version="1.0" encoding="utf-8"?>
+<set
+xmlns:android="http://schemas.android.com/apk/res/android"
+android:interpolator="@android:anim/linear_interpolator"
+android:fillAfter="true">
+<translate
+android:fromXDelta="0%p"
+android:toYDelta="15%p"
+android:duration="2000"
+/>
+</set>
+
+(rotate.xml)
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+<rotate xmlns:android="http://schemas.android.com/apk/res/android"
+android:fromDegrees="0"
+android:toDegrees="360"
+android:pivotX="50%"
+android:pivotY="50%"
+android:duration="3000" >
+</rotate>
+</set>
+
+(zoom.xml)
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+<scale xmlns:android="http://schemas.android.com/apk/res/android"
+android:fromXScale="1.0"
+android:fromYScale="1.0"
+android:toXScale="1.2"
+android:toYScale="1.2"
+android:duration="3000"
+android:pivotX="50%"
+android:pivotY="50%"/>
+</set>
+
+
+//multithreading
+package com.example.multithread;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+
+public class MainActivity extends AppCompatActivity {
+    private TextView banner, coord, counter_text;
+
+    private Button counter;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        banner = (TextView) findViewById(R.id.banner);
+        counter_text = (TextView) findViewById(R.id.counter);
+        coord = (TextView) findViewById(R.id.coord);
+        counter = (Button) findViewById(R.id.button);
+
+        counter.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+int current = Integer.parseInt(counter_text.getText().toString());
+                current++;
+                counter_text.setText(String.valueOf(current));
+            }});
+
+//Ways to convert from integer to string and back and forth
+//from integer to string :- Integer.to_string(num)
+//String.valueOf(num)
+//from string to int :- Integer.valueOf(str)
+//Integer.parseInt(str)
+/*
+    To create a new thread, either create a class that extends Thread and override void run() function
+    To start the thread, do thread.start()
+    Or another way to create thread is,
+
+*/
+        new Thread(new Runnable() {
+            public void run() {
+                int i = 0;
+                while (i++ < 100) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            banner.animate().translationXBy(20f);
+                            coord.animate().translationXBy(20f);
+                            int[] location = new int[2];
+                            banner.getLocationOnScreen(location);
+                            coord.setText("Location: (" + location[0] + ", " + location[1] + ")");
+                        }
+                    });
+
+                }
+            }
+        }).start();
+
+ new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int i=0;
+                while(i++ < 100)
+                {
+                    try {
+                        Thread.sleep(100);
+                    }
+                    catch(Exception e)
+                    {
+                        e.printStackTrace();
+                    }
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            banner.animate().rotationXBy(45);
+                        }
+                    });
+                }
+            }
+        }).start();
+
+    }
+}
+
+(activity_main.xml)
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/banner"
+        android:layout_width="133dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="204dp"
+        android:background="#FFEB3B"
+        android:backgroundTint="#FFC107"
+        android:text="Sample Text"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/coord"
+        android:layout_width="133dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="260dp"
+        android:text="TextView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="156dp"
+        android:layout_marginTop="552dp"
+        android:text="Count"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+<TextView
+        android:id="@+id/counter"
+        android:layout_width="105dp"
+        android:layout_height="35dp"
+        android:layout_marginStart="153dp"
+        android:layout_marginTop="502dp"
+        android:text="1"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+
+
+
+
